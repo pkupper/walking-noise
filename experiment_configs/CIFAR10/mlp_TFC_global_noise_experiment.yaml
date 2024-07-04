@@ -3,13 +3,15 @@
 seml:
   executable: main.py
   name: CIFAR10_mlp_TFC_global_noise
+  conda_environment: /csghome/eml01/project/envs
   output_dir: logs
   project_root_dir: ../..
 
 slurm:
   sbatch_options:
     begin: now       # dummy parameter
-
+    partition: exercise-eml
+    gres: gpu:1
 
 #### Experiment config
 

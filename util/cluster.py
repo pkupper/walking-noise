@@ -5,6 +5,7 @@ from pathlib import Path
 _artifact_root_per_cluster_name = {
     'helix': Path('/home/hd/hd_hd/hd_sc429/gpfs/hd_sc429-seml_artifact_storage_1/'),
     'octane': Path('/share/hborras/seml_artifacts/'),
+    'hawaii': Path('/csghome/eml01/project/seml_artifacts/'),
 }
 
 

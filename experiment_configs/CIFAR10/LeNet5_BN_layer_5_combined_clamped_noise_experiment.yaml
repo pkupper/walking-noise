@@ -3,6 +3,7 @@
 seml:
   executable: main.py
   name: CIFAR10_LeNet5_BN_layer_wise_noise
+  conda_environment: /csghome/eml01/project/envs
   output_dir: logs
   project_root_dir: ../..
 
@@ -11,7 +12,8 @@ slurm:
   experiments_per_job: 12
   sbatch_options:
     begin: now       # dummy parameter
-
+    partition: exercise-eml
+    gres: gpu:1
 
 #### Experiment config
 
