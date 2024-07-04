@@ -11,6 +11,7 @@ import uuid
 from io import StringIO
 from pathlib import Path
 from typing import Optional, Union
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -30,6 +31,7 @@ from models_noisy.mlp import MLP
 from models_noisy.util import WeightClamper
 from models_noisy.vgg import VGG
 from noise_operator import config as cfg
+from noise_operator.operators import NoiseOperator
 from util import cluster
 from util.console_logging import print_status
 
@@ -386,7 +388,14 @@ class ExperimentWrapper:
 
         return summed_loss, accuracy
 
-    def validation_step(self, run_on_test_dataset_instead=False):
+    def validation_step(self, run_on_test_dataset_instead=False, override_noise_config=None):
+        if override_noise_config is not None:
+            for layer in self.model.features:
+                if isinstance(layer, NoiseOperator) and isinstance(layer.layer_config, cfg.GaussCombinedDirectConfig):
+                    print("Overriding noise config for validation:")
+                    print(override_noise_config)
+                    layer.layer_config = override_noise_config
+
         # Validation step
         self.model.eval()
         summed_loss = 0.
@@ -534,6 +543,16 @@ def get_free_gpus(_log):
     _log.info(f'GPUs with the most available memory: {list(valid_gpus)}')
     return valid_gpus
 
+def get_inference_noise_configurations(training_config: cfg.GaussCombinedDirectConfig) -> list[cfg.GaussCombinedDirectConfig]:
+    configs = []
+
+    for sdev in range(1, 10):
+        conf = deepcopy(training_config)
+        conf.GaussStdAdd = float(sdev)
+        conf.FirstMulThenAdd = not conf.FirstMulThenAdd
+        configs.append(conf)
+
+    return configs
 
 # This function will be called by default. Note that we could in principle manually pass an experiment instance,
 # e.g., obtained by loading a model from the database or by calling this from a Jupyter notebook.
@@ -630,6 +649,14 @@ def train(general, _log, experiment=None):
         time.sleep(10.)
         # Make sure the artifact gets removed from the local disk
         os.remove(export_path)
+
+    training_noise_config = None
+    for layer in experiment.model.features:
+        if isinstance(layer, NoiseOperator) and isinstance(layer.layer_config, cfg.GaussCombinedDirectConfig):
+            training_noise_config = layer.layer_config
+
+    for conf in get_inference_noise_configurations(training_noise_config):
+        experiment.validation_step(override_noise_config=conf)
 
     # Save the result data with seml
     return experiment.get_seml_return_data()
