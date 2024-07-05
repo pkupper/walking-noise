@@ -388,12 +388,10 @@ class ExperimentWrapper:
 
         return summed_loss, accuracy
 
-    def validation_step(self, run_on_test_dataset_instead=False, override_noise_config=None):
+    def validation_step(self, run_on_test_dataset_instead=False, override_noise_config=None, training_noise_config=None):
         if override_noise_config is not None:
             for layer in self.model.features:
                 if isinstance(layer, NoiseOperator) and isinstance(layer.layer_config, cfg.GaussCombinedDirectConfig):
-                    print("Overriding noise config for validation:")
-                    print(override_noise_config)
                     layer.layer_config = override_noise_config
 
         # Validation step
@@ -424,6 +422,9 @@ class ExperimentWrapper:
         else:
             self.log_scalar("validation.loss", summed_loss)
             self.log_scalar("validation.accuracy", accuracy)
+
+        if override_noise_config is not None:
+            print(f"INF DATA{training_noise_config.FirstMulThenAdd},{training_noise_config.GaussStdMul},{training_noise_config.GaussStdAdd},{override_noise_config.FirstMulThenAdd},{override_noise_config.GaussStdMul},{override_noise_config.GaussStdAdd},{accuracy}INF END")
 
         return summed_loss, accuracy
 
@@ -546,11 +547,26 @@ def get_free_gpus(_log):
 def get_inference_noise_configurations(training_config: cfg.GaussCombinedDirectConfig) -> list[cfg.GaussCombinedDirectConfig]:
     configs = []
 
-    for sdev in range(1, 10):
-        conf = deepcopy(training_config)
-        conf.GaussStdAdd = float(sdev)
-        conf.FirstMulThenAdd = not conf.FirstMulThenAdd
-        configs.append(conf)
+    noise_sigmas = [
+        9.999999999999999e-05,
+        0.00774263682681127,
+        0.5994842503189408,
+        46.41588833612773,
+        3593.8136638046253,
+        278255.94022071257,
+        21544346.90031878,
+        1668100537.2000556,
+        129154966501.48827,
+        10000000000000.0
+    ]
+
+    for additive in noise_sigmas:
+        for multiplicative in noise_sigmas:
+            conf = deepcopy(training_config)
+            conf.FirstMulThenAdd = not conf.FirstMulThenAdd
+            conf.GaussStdAdd = additive
+            conf.GaussStdMul = multiplicative
+            configs.append(conf)
 
     return configs
 
@@ -655,8 +671,12 @@ def train(general, _log, experiment=None):
         if isinstance(layer, NoiseOperator) and isinstance(layer.layer_config, cfg.GaussCombinedDirectConfig):
             training_noise_config = layer.layer_config
 
+    print("INF DATA START")
+    print("TrainFirstMulThenAdd,TrainGaussStdMul,TrainGaussStdAdd,InfFirstMulThenAdd,InfGaussStdMul,InfGaussStdAdd,Accuracy")
     for conf in get_inference_noise_configurations(training_noise_config):
-        experiment.validation_step(override_noise_config=conf)
+        experiment.validation_step(override_noise_config=conf, training_noise_config=training_noise_config)
+
+    print("INF DATA END")
 
     # Save the result data with seml
     return experiment.get_seml_return_data()
