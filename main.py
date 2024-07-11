@@ -390,9 +390,9 @@ class ExperimentWrapper:
 
     def validation_step(self, run_on_test_dataset_instead=False, override_noise_config=None, training_noise_config=None):
         if override_noise_config is not None:
-            for layer in self.model.features:
+            for index, layer in enumerate(self.model.features):
                 if isinstance(layer, NoiseOperator) and isinstance(layer.layer_config, cfg.GaussCombinedDirectConfig):
-                    layer.layer_config = override_noise_config
+                    self.model.features[index] = NoiseOperator(override_noise_config)
 
         # Validation step
         self.model.eval()
