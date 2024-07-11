@@ -18,7 +18,7 @@ slurm:
 
 fixed:
   general:
-    num_epochs: 1
+    num_epochs: 300
   optimizer:
     optimizer_type: Adam
     lr_scheduler: CosineAnnealingLR

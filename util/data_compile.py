@@ -9,12 +9,14 @@ LOG_PATH = os.path.abspath("../logs/")
 OUT_PATH = os.path.abspath("../logs/compiled.out")
 MEASUREMENT_REGEX = r"(?<=INF DATA)(True.*?|False.*?)(?=INF END)"
 
+SLURM_JOB_ID = '12423'
 
 def listdir(path, extension=str()):
     for file_name in os.listdir(path):
-        file_path = os.path.join(path, file_name)
-        if file_path.endswith(extension) and os.path.isfile(file_path):
-            yield file_path
+        if SLURM_JOB_ID in file_name:
+            file_path = os.path.join(path, file_name)
+            if file_path.endswith(extension) and os.path.isfile(file_path):
+                yield file_path
 
 
 def extract_inference_measurements(file):
