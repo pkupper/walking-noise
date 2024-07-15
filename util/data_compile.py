@@ -5,11 +5,11 @@ import re
 #########################
 #       DEFINITIONS     #
 #########################
+SLURM_JOB_ID = '13591'
 LOG_PATH = os.path.abspath("../logs/")
-OUT_PATH = os.path.abspath("../logs/compiled.out")
+OUT_PATH = os.path.abspath(f"../logs/compiled_{SLURM_JOB_ID}.out")
 MEASUREMENT_REGEX = r"(?<=INF DATA)(True.*?|False.*?)(?=INF END)"
 
-SLURM_JOB_ID = '12423'
 
 def listdir(path, extension=str()):
     for file_name in os.listdir(path):
