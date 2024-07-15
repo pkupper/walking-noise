@@ -7,7 +7,7 @@ default_default/
 
 # Notebooks and plots
 notebooks/
-plotting/
+# plotting/
 
 # InteliJ, everything
 .idea/
